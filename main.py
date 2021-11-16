@@ -8,23 +8,23 @@ class Node:
 
     def __init__(self):
         self.probability_table = []
-    # evident = False
-    # evidency_value = 0
 
 
 class TableRow:
     values = []
     probabilities = []
+
     def __init__(self, v, p):
         self.values = [int(numeric_string) for numeric_string in v]
         self.probabilities = [float(numeric_string) for numeric_string in p]
 
 
-class Expediency:
-    def __init__(self, var_value, decision, expediency_value):
+class Expedience:
+    def __init__(self, var_value, decision, expedience_value):
         self.var_value = var_value
         self.decision = decision
-        self.expediency_value = expediency_value
+        self.expedience_value = expedience_value
+
 
 def normalize(q):
     sum = 0
@@ -36,6 +36,7 @@ def normalize(q):
 
     return q
 
+
 def evident_values(y_idx, e):
     value = e[y_idx]
     if value is not None:
@@ -46,10 +47,8 @@ def evident_values(y_idx, e):
 
 def get_p(Y, y_value, e):
     parent_vals = []
-    # print(e)
     for i in range(len(Y.parent_indexes)):
         parent_vals.append(evident_values(Y.parent_indexes[i], e))
-        # print(Y.parent_indexes[i] ,evident_values(Y.parent_indexes[i], e))
 
     if not Y.parent_indexes:
         return Y.probability_table[0].probabilities[y_value]
@@ -90,18 +89,25 @@ def list_ask(X, e, bn):
     temp_e = e.copy()
     for x_val in range(X.k):
         temp_e[X.idx] = x_val
-
         Q[x_val] = list_all(bn.copy(), temp_e)
-        print(temp_e)
-        print(Q)
 
     return normalize(Q)
 
 
+def expected_expediences(Q, expediencies, d):
+    result = []
+    for i in range(d):
+        expected_expedience = 0
+        for e in range(len(expediencies)):
+            if expediencies[e].decision == i:
+                expected_expedience += Q[expediencies[e].var_value] * expediencies[e].expedience_value
+        result.append(expected_expedience)
+
+    return result
 
 
-
-with fileinput.input(files=r'C:\projects\ai\hazi2\mi-bayes-halo\examples_mihf_decisionnet_2021\input1.txt') as f:
+# files=r'C:\projects\ai\hazi2\mi-bayes-halo\examples_mihf_decisionnet_2021\input2.txt'
+with fileinput.input() as f:
     num_of_nodes = int(f.readline().rstrip())
 
     nodes = [Node() for i in range(num_of_nodes)]
@@ -109,7 +115,7 @@ with fileinput.input(files=r'C:\projects\ai\hazi2\mi-bayes-halo\examples_mihf_de
     for i in range(num_of_nodes):
         attributes = f.readline().rstrip().split("\t")
 
-        nodes[i].idx=i
+        nodes[i].idx = i
         nodes[i].k = int(attributes[0])
         num_indexes = int(attributes[1])
         parent_indexes = []
@@ -138,26 +144,23 @@ with fileinput.input(files=r'C:\projects\ai\hazi2\mi-bayes-halo\examples_mihf_de
     # read evidency variables
     for i in range(num_of_evidency_var):
         attributes = f.readline().rstrip().split("\t")
-        # nodes[int(attributes[0])].evident = True
-        # nodes[int(attributes[0])].evidency_value = int(attributes[1])
         evident_vars[int(attributes[0])] = int(attributes[1])
 
     index_of_goal_var = int(f.readline().rstrip())
 
     num_of_decisions = int(f.readline().rstrip())
 
-    expediencies = []
+    expediences = []
 
     for i in range(nodes[index_of_goal_var].k * num_of_decisions):
         attributes = f.readline().rstrip().split("\t")
-        expediencies.append(Expediency(int(attributes[0]), int(attributes[1]), float(attributes[2])))
-
-    # for i in range(len(nodes)):
-    #     print(nodes[i].k, nodes[i].parent_indexes)
-    #     for j in range(len(nodes[i].probability_table)):
-    #         print(nodes[i].probability_table[j].values, nodes[i].probability_table[j].probabilities)
-
+        expediences.append(Expedience(int(attributes[0]), int(attributes[1]), float(attributes[2])))
 
     Q = list_ask(nodes[index_of_goal_var], evident_vars, nodes)
 
-    print(Q)
+    for i in range(len(Q)):
+        print(Q[i])
+
+    expected_e = expected_expediences(Q, expediences, num_of_decisions)
+
+    print(expected_e.index(max(expected_e)))
